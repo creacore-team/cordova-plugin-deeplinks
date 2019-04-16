@@ -147,7 +147,7 @@ function loadProjectFile() {
           projectFile = platform_ios.parseProjectFile(iosPlatformPath());
       } catch (e) {
           // Then cordova 7.0
-          var project_files = context.requireCordovaModule('glob').sync(path.join(iosPlatformPath(), '*.xcodeproj', 'project.pbxproj'));
+          var project_files = require('glob').sync(path.join(iosPlatformPath(), '*.xcodeproj', 'project.pbxproj'));
           
           if (project_files.length === 0) {
               throw new Error('does not appear to be an xcode project (no xcode project file)');
