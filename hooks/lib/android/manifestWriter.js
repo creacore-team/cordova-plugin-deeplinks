@@ -56,11 +56,21 @@ function writePreferences(cordovaContext, pluginPreferences) {
  * @return {Object} manifest data without old intent-filters
  */
 function removeOldOptions(manifestData) {
+  console.log("removeOldOptions");
   var cleanManifest = manifestData;
   var activities = manifestData['manifest']['application'][0]['activity'];
 
+  activities.forEach(a => {
+    console.log("activity before", a['intent-filter']);
+  });
+
   activities.forEach(removeIntentFiltersFromActivity);
   cleanManifest['manifest']['application'][0]['activity'] = activities;
+
+  console.log("clean Manifest");
+  cleanManifest['manifest']['application'][0]['activity'].forEach(a => {
+    console.log("activity", a['intent-filter']);
+  });
 
   return cleanManifest;
 }
@@ -72,6 +82,7 @@ function removeOldOptions(manifestData) {
  *                            Changes applied to the passed object.
  */
 function removeIntentFiltersFromActivity(activity) {
+  console.log("removeIntentFiltersFromActivity", activity['$']['android:name']);
   var oldIntentFilters = activity['intent-filter'];
   var newIntentFilters = [];
 
@@ -186,6 +197,7 @@ function injectOptions(manifestData, pluginPreferences) {
   var changedManifest = manifestData;
   var activitiesList = changedManifest['manifest']['application'][0]['activity'];
   var launchActivityIndex = getMainLaunchActivityIndex(activitiesList);
+  console.log("getMainLaunchActivityIndex", launchActivityIndex, activitiesList.length);
   var ulIntentFilters = [];
   var launchActivity;
 
@@ -196,6 +208,7 @@ function injectOptions(manifestData, pluginPreferences) {
 
   // get launch activity
   launchActivity = activitiesList[launchActivityIndex];
+  console.log("launchActivity", launchActivity);
 
   // generate intent-filters
   pluginPreferences.hosts.forEach(function(host) {
@@ -223,11 +236,27 @@ function getMainLaunchActivityIndex(activities) {
       launchActivityIndex = index;
       return true;
     }
-
     return false;
   });
 
+  if (launchActivityIndex < 0) {
+    launchActivityIndex = createDeeplinkActivity(activities);
+  }
   return launchActivityIndex;
+}
+
+function createDeeplinkActivity(activities) {
+  console.log("createDeeplinkActivity")
+  activities.push({
+    '$': {
+      'android:name': '.ItsmeActivity',
+      'android:theme': '@android:style/Theme.Translucent.NoTitleBar',
+
+    },
+    'intent-filter': []
+  });
+  console.log("activity length", activities.length);
+  return activities.length - 1;
 }
 
 /**
@@ -237,6 +266,7 @@ function getMainLaunchActivityIndex(activities) {
  * @return {Boolean} true - if this is a launch activity; otherwise - false
  */
 function isLaunchActivity(activity) {
+  return activity['$']['android:name'] === ".ItsmeActivity";
   var intentFilters = activity['intent-filter'];
   var isLauncher = false;
 
